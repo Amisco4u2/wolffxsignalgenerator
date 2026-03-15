@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WOLF FX — Live Signal Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #050810;
+    --panel:    #0b1120;
+    --border:   #1a2640;
+    --gold:     #f0b429;
+    --lime:     #00ff88;
+    --red:      #ff3d5a;
+    --blue:     #3d9bff;
+    --purple:   #a855f7;
+    --orange:   #ff8c42;
+    --cyan:     #00e5ff;
+    --text:     #c8d8f0;
+    --dim:      #4a6080;
+    --tp1:      #fde047;
+    --tp2:      #fb923c;
+    --tp3:      #3b82f6;
+    --tp4:      #d946ef;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(61,155,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(61,155,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 0 20px 60px; }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo-icon {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, var(--gold), #e67e00);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 0 24px rgba(240,180,41,0.35);
+  }
+
+  .logo-text h1 {
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(240,180,41,0.4);
+    line-height: 1;
+  }
+
+  .logo-text span {
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 4px;
+    color: var(--dim);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .live-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(0,255,136,0.08);
+    border: 1px solid rgba(0,255,136,0.2);
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--lime);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .live-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--lime);
+    box-shadow: 0 0 8px var(--lime);
+    animation: pulse 1.4s ease infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent, var(--blue));
+  }
+
+  .stat-card .label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--dim);
+    font-family: 'Share Tech Mono', monospace;
+    margin-bottom: 6px;
+  }
+
+  .stat-card .value {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--accent, var(--blue));
+    line-height: 1;
+  }
+
+  /* SETUP PANEL */
+  .setup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 14px 20px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--gold);
+  }
+
+  .panel-body { padding: 20px; }
+
+  .field-group { margin-bottom: 16px; }
+
+  .field-group label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    margin-bottom: 6px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .field-group input, .field-group select {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .field-group input:focus {
+    border-color: var(--blue);
+    background: rgba(61,155,255,0.05);
+  }
+
+  .btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--blue), #0066cc);
+    color: #fff;
+  }
+
+  .btn-primary:hover { filter: brightness(1.15); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-telegram {
+    background: linear-gradient(135deg, #2ca5e0, #1a7eb0);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .instructions {
+    background: rgba(240,180,41,0.05);
+    border: 1px solid rgba(240,180,41,0.15);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    line-height: 1.8;
+    color: var(--text);
+  }
+
+  .instructions b { color: var(--gold); }
+  .instructions code {
+    background: rgba(0,0,0,0.4);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--cyan);
+  }
+
+  .step {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    min-width: 22px; height: 22px;
+    background: var(--gold);
+    color: #000;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 900;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  /* SIGNALS FEED */
+  .signals-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .signals-title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--gold);
+  }
+
+  .filter-tabs {
+    display: flex;
+    gap: 8px;
+  }
+
+  .tab {
+    padding: 5px 14px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--dim);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab.active, .tab:hover {
+    border-color: var(--blue);
+    color: var(--blue);
+    background: rgba(61,155,255,0.08);
+  }
+
+  /* SIGNAL CARD */
+  .signal-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    animation: slideIn 0.3s ease;
+    transition: border-color 0.2s;
+  }
+
+  .signal-card:hover { border-color: rgba(61,155,255,0.3); }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .signal-card.buy  { border-left: 3px solid var(--lime); }
+  .signal-card.sell { border-left: 3px solid var(--red);  }
+
+  .signal-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px 10px;
+  }
+
+  .signal-left { display: flex; align-items: center; gap: 14px; }
+
+  .dir-badge {
+    padding: 4px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 3px;
+  }
+
+  .dir-badge.buy  { background: rgba(0,255,136,0.15); color: var(--lime); border: 1px solid rgba(0,255,136,0.3); }
+  .dir-badge.sell { background: rgba(255,61,90,0.15);  color: var(--red);  border: 1px solid rgba(255,61,90,0.3); }
+
+  .signal-symbol {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1px;
+  }
+
+  .signal-meta {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--dim);
+  }
+
+  .mode-chip {
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    background: rgba(168,85,247,0.15);
+    color: var(--purple);
+    border: 1px solid rgba(168,85,247,0.25);
+  }
+
+  .signal-prices {
+    display: grid;
+    grid-template-columns: 1fr repeat(5, 1fr) 1fr;
+    gap: 1px;
+    background: var(--border);
+    border-top: 1px solid var(--border);
+  }
+
+  .price-cell {
+    background: var(--bg);
+    padding: 10px 14px;
+    text-align: center;
+  }
+
+  .price-cell .plabel {
+    font-size: 9px;
+    letter-spacing: 2px;
+    font-family: 'Share Tech Mono', monospace;
+    margin-bottom: 3px;
+  }
+
+  .price-cell .pval {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .price-cell.entry .plabel { color: var(--dim); }
+  .price-cell.entry .pval   { color: #fff; }
+  .price-cell.sl    .plabel { color: var(--red); }
+  .price-cell.sl    .pval   { color: var(--red); }
+  .price-cell.tp1   .plabel { color: var(--tp1); }
+  .price-cell.tp1   .pval   { color: var(--tp1); }
+  .price-cell.tp2   .plabel { color: var(--tp2); }
+  .price-cell.tp2   .pval   { color: var(--tp2); }
+  .price-cell.tp3   .plabel { color: var(--tp3); }
+  .price-cell.tp3   .pval   { color: var(--tp3); }
+  .price-cell.tp4   .plabel { color: var(--tp4); }
+  .price-cell.tp4   .pval   { color: var(--tp4); }
+  .price-cell.lots  .plabel { color: var(--dim); }
+  .price-cell.lots  .pval   { color: var(--cyan); }
+
+  /* STATUS CHIPS */
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .status-chip.active  { background: rgba(0,255,136,0.1); color: var(--lime); border: 1px solid rgba(0,255,136,0.2); }
+  .status-chip.tp1hit  { background: rgba(253,224,71,0.1); color: var(--tp1); border: 1px solid rgba(253,224,71,0.2); }
+  .status-chip.tp2hit  { background: rgba(251,146,60,0.1); color: var(--tp2); border: 1px solid rgba(251,146,60,0.2); }
+  .status-chip.tp3hit  { background: rgba(59,130,246,0.1); color: var(--tp3); border: 1px solid rgba(59,130,246,0.2); }
+  .status-chip.closed  { background: rgba(100,100,100,0.1); color: var(--dim); border: 1px solid rgba(100,100,100,0.2); }
+  .status-chip.sl-hit  { background: rgba(255,61,90,0.1); color: var(--red); border: 1px solid rgba(255,61,90,0.2); }
+
+  /* TELEGRAM PREVIEW */
+  .tg-preview {
+    background: #17212b;
+    border-radius: 10px;
+    padding: 16px;
+    font-family: -apple-system, sans-serif;
+    font-size: 13px;
+    line-height: 1.7;
+    margin-top: 12px;
+    border: 1px solid #2a3c4e;
+    position: relative;
+  }
+
+  .tg-preview::before {
+    content: '📱 TELEGRAM PREVIEW';
+    position: absolute;
+    top: -10px; left: 14px;
+    background: var(--panel);
+    padding: 0 8px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .tg-message {
+    background: #2b5278;
+    border-radius: 0 10px 10px 10px;
+    padding: 10px 14px;
+    display: inline-block;
+    max-width: 90%;
+    color: #e8f4ff;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .tg-message b { color: #fff; }
+  .tg-sender {
+    font-size: 12px;
+    color: #64b5f6;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  /* MQL5 CODE BLOCK */
+  .code-block {
+    background: #030508;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    line-height: 1.7;
+    color: #8baad0;
+    overflow-x: auto;
+    position: relative;
+  }
+
+  .code-block .kw  { color: #569cd6; }
+  .code-block .fn  { color: #dcdcaa; }
+  .code-block .str { color: #ce9178; }
+  .code-block .cmt { color: #6a9955; }
+  .code-block .num { color: #b5cea8; }
+
+  .copy-btn {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--border);
+    color: var(--dim);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .copy-btn:hover { color: var(--text); background: rgba(255,255,255,0.12); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--dim);
+  }
+
+  .empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+  .empty-state p { font-size: 14px; letter-spacing: 2px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .stats-bar       { grid-template-columns: repeat(3, 1fr); }
+    .setup-grid      { grid-template-columns: 1fr; }
+    .signal-prices   { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  }
+
+  @media (max-width: 600px) {
+    .stats-bar { grid-template-columns: 1fr 1fr; }
+    .signal-prices { grid-template-columns: 1fr 1fr 1fr; }
+  }
+
+  /* Notification toast */
+  #toast {
+    position: fixed;
+    bottom: 30px; right: 30px;
+    background: var(--panel);
+    border: 1px solid var(--lime);
+    border-radius: 8px;
+    padding: 14px 20px;
+    font-size: 13px;
+    color: var(--lime);
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 1px;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 20px rgba(0,255,136,0.15);
+  }
+
+  #toast.show { transform: translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🐺</div>
+      <div class="logo-text">
+        <h1>WOLF FX</h1>
+        <span>LIVE SIGNAL DASHBOARD · V4 PRO</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        LIVE
+      </div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--dim);" id="clock">--:--:--</div>
+    </div>
+  </header>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-card" style="--accent:var(--lime)">
+      <div class="label">TOTAL SIGNALS</div>
+      <div class="value" id="stat-total">0</div>
+    </div>
+    <div class="stat-card" style="--accent:var(--lime)">
+      <div class="label">BUY SIGNALS</div>
+      <div class="value" id="stat-buys">0</div>
+    </div>
+    <div class="stat-card" style="--accent:var(--red)">
+      <div class="label">SELL SIGNALS</div>
+      <div class="value" id="stat-sells">0</div>
+    </div>
+    <div class="stat-card" style="--accent:var(--tp3)">
+      <div class="label">TP HIT RATE</div>
+      <div class="value" id="stat-tprate">—</div>
+    </div>
+    <div class="stat-card" style="--accent:var(--gold)">
+      <div class="label">ACTIVE NOW</div>
+      <div class="value" id="stat-active">0</div>
+    </div>
+  </div>
+
+  <!-- SETUP + INSTRUCTIONS -->
+  <div class="setup-grid">
+
+    <!-- Telegram Setup -->
+    <div class="panel">
+      <div class="panel-header">⚙ TELEGRAM BOT SETUP</div>
+      <div class="panel-body">
+        <div class="field-group">
+          <label>BOT TOKEN (from @BotFather)</label>
+          <input type="text" id="botToken" placeholder="123456789:ABCdef..." />
+        </div>
+        <div class="field-group">
+          <label>CHAT / CHANNEL ID</label>
+          <input type="text" id="chatId" placeholder="-100123456789 or @yourchannel" />
+        </div>
+        <button class="btn btn-primary" onclick="testTelegram()">▶ TEST CONNECTION</button>
+        <button class="btn btn-telegram" onclick="openBotFather()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.56 8.18l-2.04 9.6c-.15.68-.55.84-1.11.52l-3-2.21-1.45 1.39c-.16.16-.3.3-.61.3l.22-3.07 5.6-5.06c.24-.22-.05-.34-.37-.12L7.08 14.4l-2.96-.92c-.64-.2-.65-.64.14-.95l11.55-4.45c.53-.2 1 .13.75.1z"/></svg>
+          CREATE BOT ON TELEGRAM
+        </button>
+
+        <div class="tg-preview" style="margin-top:20px;">
+          <div class="tg-sender">🐺 Wolf FX Bot</div>
+          <div class="tg-message">
+            📈🟢 <b>WOLF FX SIGNAL</b> 📈🟢<br><br>
+            📌 <b>Symbol:</b>  BTCUSDm<br>
+            ⏰ <b>Time:</b>    2026.03.15 14:32<br>
+            📊 <b>TF:</b>      M1<br>
+            🎯 <b>Mode:</b>    TREND<br>
+            ─────────────────────<br>
+            🟢 <b>Direction:</b> BUY<br>
+            💵 <b>Entry:</b>   83,450.00<br>
+            🛑 <b>SL:</b>      82,950.00<br>
+            ─────────────────────<br>
+            🎯 <b>TP1:</b>     83,750.00<br>
+            🎯 <b>TP2:</b>     84,050.00<br>
+            🎯 <b>TP3:</b>     84,450.00<br>
+            🎯 <b>TP4:</b>     84,950.00<br>
+            ─────────────────────<br>
+            💰 <b>Balance:</b> $10,000.00<br>
+            📦 <b>Lots:</b>    0.01<br><br>
+            ⚡ <i>Wolf FX Scalper V4 Pro</i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Setup Instructions -->
+    <div class="panel">
+      <div class="panel-header">📋 QUICK SETUP GUIDE</div>
+      <div class="panel-body">
+        <div class="instructions">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div>Open Telegram, search <code>@BotFather</code> and send <code>/newbot</code> — copy your <b>Bot Token</b></div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div>Get your Chat ID: message <code>@userinfobot</code> or use a channel and add the bot as admin. Copy the <b>Chat ID</b> (starts with <code>-100</code> for channels)</div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div>In MT5: <b>Tools → Options → Expert Advisors</b> → check <b>"Allow WebRequest"</b> → add URL: <code>https://api.telegram.org</code></div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div>In the EA inputs, paste your <b>Bot Token</b> and <b>Chat ID</b> in the Telegram section. Set <code>EnableTelegram = true</code></div>
+          </div>
+          <div class="step">
+            <div class="step-num">5</div>
+            <div>Every BUY/SELL signal fires an alert to your Telegram <b>instantly</b> with Entry, SL, TP1–TP4 prices</div>
+          </div>
+          <div class="step">
+            <div class="step-num">6</div>
+            <div>To receive signals on this website: use a <b>Telegram webhook</b> or the polling script below to push signals into the feed</div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;">
+          <div style="font-size:10px;letter-spacing:2px;color:var(--dim);margin-bottom:8px;font-family:'Share Tech Mono',monospace;">MANUAL SIGNAL ENTRY (for testing)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+            <select id="testDir" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;">
+              <option>BUY</option>
+              <option>SELL</option>
+            </select>
+            <input id="testSymbol" type="text" value="BTCUSDm" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;">
+            <select id="testMode" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;">
+              <option>TREND</option>
+              <option>RANGE</option>
+              <option>BREAKOUT</option>
+            </select>
+          </div>
+          <input id="testEntry" type="number" value="83450" placeholder="Entry Price" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:8px;">
+          <button class="btn btn-primary" onclick="injectTestSignal()">➕ INJECT TEST SIGNAL</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIGNAL FEED -->
+  <div class="signals-header">
+    <div class="signals-title">📡 LIVE SIGNAL FEED</div>
+    <div class="filter-tabs">
+      <button class="tab active" onclick="filterSignals('all', this)">ALL</button>
+      <button class="tab" onclick="filterSignals('buy', this)">BUY</button>
+      <button class="tab" onclick="filterSignals('sell', this)">SELL</button>
+      <button class="tab" onclick="filterSignals('active', this)">ACTIVE</button>
+    </div>
+  </div>
+
+  <div id="signalFeed"></div>
+
+  <!-- TOAST -->
+  <div id="toast">📡 New signal received!</div>
+
+</div>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────────
+const signals = [];
+let currentFilter = 'all';
+
+// ─── CLOCK ────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toUTCString().split(' ')[4] + ' UTC';
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─── TELEGRAM TEST ────────────────────────────────────────────────
+async function testTelegram() {
+  const token  = document.getElementById('botToken').value.trim();
+  const chatId = document.getElementById('chatId').value.trim();
+  if(!token || !chatId) { showToast('⚠ Enter Bot Token and Chat ID first'); return; }
+
+  const msg = encodeURIComponent('✅ Wolf FX Dashboard connected! Signals will appear here.');
+  const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${msg}`;
+  try {
+    const r = await fetch(url);
+    const d = await r.json();
+    if(d.ok) showToast('✅ Telegram connected!');
+    else     showToast('❌ Error: ' + d.description);
+  } catch(e) {
+    showToast('❌ Network error — check token');
+  }
+}
+
+function openBotFather() {
+  window.open('https://t.me/BotFather', '_blank');
+}
+
+// ─── INJECT SIGNAL ────────────────────────────────────────────────
+function injectTestSignal() {
+  const dir    = document.getElementById('testDir').value;
+  const symbol = document.getElementById('testSymbol').value || 'BTCUSDm';
+  const mode   = document.getElementById('testMode').value;
+  const entry  = parseFloat(document.getElementById('testEntry').value) || 83450;
+
+  const isBuy = dir === 'BUY';
+  const sl  = isBuy ? entry - 500  : entry + 500;
+  const tp1 = isBuy ? entry + 300  : entry - 300;
+  const tp2 = isBuy ? entry + 600  : entry - 600;
+  const tp3 = isBuy ? entry + 1000 : entry - 1000;
+  const tp4 = isBuy ? entry + 1500 : entry - 1500;
+
+  addSignal({ dir, symbol, mode, entry, sl, tp1, tp2, tp3, tp4,
+              time: new Date(), lots: 0.01, status: 'active' });
+}
+
+function addSignal(sig) {
+  sig.id = Date.now();
+  signals.unshift(sig);
+  updateStats();
+  renderFeed();
+  showToast(`📡 ${sig.dir} signal on ${sig.symbol}`);
+}
+
+// ─── STATS ────────────────────────────────────────────────────────
+function updateStats() {
+  const buys   = signals.filter(s => s.dir === 'BUY').length;
+  const sells  = signals.filter(s => s.dir === 'SELL').length;
+  const active = signals.filter(s => s.status === 'active').length;
+  const tpHit  = signals.filter(s => ['tp1hit','tp2hit','tp3hit','tp4hit'].includes(s.status)).length;
+  const tpRate = signals.length ? Math.round(tpHit / signals.length * 100) + '%' : '—';
+
+  document.getElementById('stat-total').textContent  = signals.length;
+  document.getElementById('stat-buys').textContent   = buys;
+  document.getElementById('stat-sells').textContent  = sells;
+  document.getElementById('stat-active').textContent = active;
+  document.getElementById('stat-tprate').textContent = tpRate;
+}
+
+// ─── RENDER FEED ──────────────────────────────────────────────────
+function filterSignals(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderFeed();
+}
+
+function renderFeed() {
+  const feed = document.getElementById('signalFeed');
+  let filtered = signals;
+
+  if(currentFilter === 'buy')    filtered = signals.filter(s => s.dir === 'BUY');
+  if(currentFilter === 'sell')   filtered = signals.filter(s => s.dir === 'SELL');
+  if(currentFilter === 'active') filtered = signals.filter(s => s.status === 'active');
+
+  if(filtered.length === 0) {
+    feed.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📡</div>
+        <p>NO SIGNALS YET — EA SIGNALS WILL APPEAR HERE</p>
+      </div>`;
+    return;
+  }
+
+  feed.innerHTML = filtered.map(s => buildSignalCard(s)).join('');
+}
+
+function fmt(n) {
+  return n >= 1000 ? n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) : n.toFixed(5);
+}
+
+function buildSignalCard(s) {
+  const isBuy = s.dir === 'BUY';
+  const timeStr = s.time instanceof Date
+    ? s.time.toUTCString().replace('GMT','').trim()
+    : s.time;
+
+  const statusMap = {
+    'active': '<span class="status-chip active">● ACTIVE</span>',
+    'tp1hit': '<span class="status-chip tp1hit">✓ TP1 HIT</span>',
+    'tp2hit': '<span class="status-chip tp2hit">✓ TP2 HIT</span>',
+    'tp3hit': '<span class="status-chip tp3hit">✓ TP3 HIT</span>',
+    'tp4hit': '<span class="status-chip active">✓ TP4 HIT 🏆</span>',
+    'closed': '<span class="status-chip closed">◉ CLOSED</span>',
+    'sl-hit': '<span class="status-chip sl-hit">✖ SL HIT</span>',
+  };
+
+  return `
+  <div class="signal-card ${isBuy ? 'buy' : 'sell'}" data-id="${s.id}">
+    <div class="signal-top">
+      <div class="signal-left">
+        <span class="dir-badge ${isBuy ? 'buy' : 'sell'}">${s.dir}</span>
+        <div>
+          <div class="signal-symbol">${s.symbol}</div>
+          <div class="signal-meta">${timeStr}</div>
+        </div>
+        <span class="mode-chip">${s.mode}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        ${statusMap[s.status] || ''}
+        <select onchange="updateStatus('${s.id}', this.value)"
+          style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--dim);
+                 font-family:'Share Tech Mono',monospace;font-size:10px;padding:4px 8px;
+                 border-radius:4px;cursor:pointer;">
+          <option value="active"  ${s.status==='active'  ?'selected':''}>ACTIVE</option>
+          <option value="tp1hit"  ${s.status==='tp1hit'  ?'selected':''}>TP1 HIT</option>
+          <option value="tp2hit"  ${s.status==='tp2hit'  ?'selected':''}>TP2 HIT</option>
+          <option value="tp3hit"  ${s.status==='tp3hit'  ?'selected':''}>TP3 HIT</option>
+          <option value="tp4hit"  ${s.status==='tp4hit'  ?'selected':''}>TP4 HIT</option>
+          <option value="sl-hit"  ${s.status==='sl-hit'  ?'selected':''}>SL HIT</option>
+          <option value="closed"  ${s.status==='closed'  ?'selected':''}>CLOSED</option>
+        </select>
+      </div>
+    </div>
+    <div class="signal-prices">
+      <div class="price-cell entry"><div class="plabel">ENTRY</div><div class="pval">${fmt(s.entry)}</div></div>
+      <div class="price-cell sl">   <div class="plabel">✖ SL</div> <div class="pval">${fmt(s.sl)}</div></div>
+      <div class="price-cell tp1">  <div class="plabel">🎯 TP1</div><div class="pval">${fmt(s.tp1)}</div></div>
+      <div class="price-cell tp2">  <div class="plabel">🎯 TP2</div><div class="pval">${fmt(s.tp2)}</div></div>
+      <div class="price-cell tp3">  <div class="plabel">🎯 TP3</div><div class="pval">${fmt(s.tp3)}</div></div>
+      <div class="price-cell tp4">  <div class="plabel">🎯 TP4</div><div class="pval">${fmt(s.tp4)}</div></div>
+      <div class="price-cell lots"> <div class="plabel">LOTS</div>  <div class="pval">${s.lots}</div></div>
+    </div>
+  </div>`;
+}
+
+function updateStatus(id, status) {
+  const s = signals.find(x => x.id == id);
+  if(s) { s.status = status; updateStats(); renderFeed(); }
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ─── DEMO SIGNALS ─────────────────────────────────────────────────
+// Preload 2 example signals so the page isn't empty
+setTimeout(() => {
+  addSignal({ dir:'BUY', symbol:'BTCUSDm', mode:'TREND',
+    entry:83450, sl:82950, tp1:83750, tp2:84050, tp3:84450, tp4:84950,
+    time: new Date(Date.now()-900000), lots:0.01, status:'tp2hit' });
+
+  addSignal({ dir:'SELL', symbol:'BTCUSDm', mode:'BREAKOUT',
+    entry:84100, sl:84600, tp1:83800, tp2:83500, tp3:83100, tp4:82600,
+    time: new Date(Date.now()-300000), lots:0.01, status:'active' });
+}, 400);
+</script>
+</body>
+</html>

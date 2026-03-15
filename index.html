@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WOLF FX — Algorithmic Trading Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════════ */
+:root {
+  --obsidian:   #04060d;
+  --void:       #070b16;
+  --deep:       #0c1220;
+  --midnight:   #111827;
+  --glass:      rgba(255,255,255,0.04);
+  --glass-md:   rgba(255,255,255,0.07);
+  --glass-hi:   rgba(255,255,255,0.11);
+  --border:     rgba(255,255,255,0.08);
+  --border-hi:  rgba(255,255,255,0.16);
+
+  --gold:       #f0a500;
+  --gold-lt:    #ffc844;
+  --gold-dk:    #c07800;
+  --amber:      #ff8c00;
+  --ember:      #ff4d00;
+
+  --cyan:       #00d4ff;
+  --teal:       #00ffcc;
+  --electric:   #0099ff;
+
+  --white:      #f0f4ff;
+  --silver:     #8899bb;
+  --muted:      #445577;
+
+  --grad-gold:  linear-gradient(135deg, #f0a500, #ff6b00);
+  --grad-sky:   linear-gradient(135deg, #0099ff, #00d4ff);
+  --grad-hero:  linear-gradient(160deg, #f0a500 0%, #ff4d00 40%, #c026d3 100%);
+
+  --font-display: 'Syne', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+
+  --shadow-gold: 0 0 60px rgba(240,165,0,0.15), 0 20px 60px rgba(0,0,0,0.5);
+  --shadow-card: 0 8px 32px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.06) inset;
+  --shadow-glow: 0 0 40px rgba(0,212,255,0.12);
+}
+
+/* ═══════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; font-size:16px; }
+
+body {
+  background: var(--obsidian);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Noise grain overlay */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 9999; opacity: 0.4;
+}
+
+/* ═══════════════════════════════════════════════
+   AURORA CANVAS BACKGROUND
+═══════════════════════════════════════════════ */
+#aurora {
+  position: fixed; inset: 0;
+  z-index: 0; pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════════ */
+.wrap {
+  position: relative; z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+section { position: relative; z-index: 1; }
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 1000;
+  padding: 0 24px;
+  transition: all 0.4s ease;
+}
+
+nav.scrolled {
+  background: rgba(4,6,13,0.85);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+}
+
+.nav-inner {
+  max-width: 1200px; margin: 0 auto;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  height: 72px;
+}
+
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none;
+}
+
+.nav-logo-mark {
+  width: 38px; height: 38px;
+  background: var(--grad-gold);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800;
+  color: #000;
+  font-family: var(--font-display);
+  box-shadow: 0 0 20px rgba(240,165,0,0.4);
+  letter-spacing: -1px;
+}
+
+.nav-logo-text {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 800;
+  letter-spacing: 2px;
+  background: var(--grad-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.nav-links {
+  display: flex; align-items: center; gap: 8px;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--silver);
+  text-decoration: none;
+  font-size: 14px; font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  letter-spacing: 0.3px;
+}
+
+.nav-links a:hover {
+  color: var(--white);
+  background: var(--glass);
+}
+
+.nav-cta {
+  display: flex; align-items: center; gap: 12px;
+}
+
+.btn-nav {
+  padding: 9px 20px;
+  border-radius: 10px;
+  font-size: 14px; font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer; border: none;
+  transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+  text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--silver);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover {
+  color: var(--white);
+  border-color: var(--border-hi);
+  background: var(--glass);
+}
+
+.btn-gold {
+  background: var(--grad-gold);
+  color: #000;
+  font-weight: 700;
+  box-shadow: 0 0 20px rgba(240,165,0,0.3);
+}
+.btn-gold:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 35px rgba(240,165,0,0.5);
+  filter: brightness(1.1);
+}
+
+/* Hamburger */
+.hamburger {
+  display: none;
+  flex-direction: column; gap: 5px;
+  cursor: pointer; padding: 8px;
+  background: none; border: none;
+}
+.hamburger span {
+  display: block; width: 22px; height: 2px;
+  background: var(--silver);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
+/* Mobile nav */
+.mobile-menu {
+  display: none;
+  position: fixed; inset: 0; top: 72px;
+  background: rgba(4,6,13,0.97);
+  backdrop-filter: blur(20px);
+  z-index: 999;
+  padding: 32px 24px;
+  flex-direction: column; gap: 8px;
+}
+.mobile-menu.open { display: flex; }
+.mobile-menu a {
+  color: var(--silver); text-decoration: none;
+  font-size: 20px; font-weight: 500;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+  transition: color 0.2s;
+}
+.mobile-menu a:hover { color: var(--white); }
+
+/* ═══════════════════════════════════════════════
+   HERO SECTION
+═══════════════════════════════════════════════ */
+.hero {
+  min-height: 100vh;
+  display: flex; align-items: center;
+  padding: 120px 24px 80px;
+  position: relative;
+}
+
+.hero-grid {
+  max-width: 1200px; margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px; align-items: center;
+}
+
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(240,165,0,0.08);
+  border: 1px solid rgba(240,165,0,0.2);
+  border-radius: 100px;
+  padding: 6px 14px 6px 8px;
+  margin-bottom: 28px;
+  animation: fadeUp 0.6s ease both;
+}
+
+.hero-eyebrow-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 8px var(--gold);
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse {
+  0%,100%{opacity:1;transform:scale(1);}
+  50%{opacity:0.5;transform:scale(0.7);}
+}
+
+.hero-eyebrow span {
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--gold-lt);
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(42px, 5.5vw, 72px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -2px;
+  margin-bottom: 24px;
+  animation: fadeUp 0.6s 0.1s ease both;
+}
+
+.hero-title .line-gold {
+  background: var(--grad-hero);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-body {
+  font-size: 17px; line-height: 1.75;
+  color: var(--silver);
+  max-width: 480px;
+  margin-bottom: 40px;
+  animation: fadeUp 0.6s 0.2s ease both;
+  font-weight: 300;
+}
+
+.hero-actions {
+  display: flex; align-items: center; gap: 14px;
+  flex-wrap: wrap;
+  animation: fadeUp 0.6s 0.3s ease both;
+}
+
+.btn-primary {
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 15px; font-weight: 700;
+  font-family: var(--font-body);
+  cursor: pointer; border: none;
+  background: var(--grad-gold);
+  color: #000;
+  box-shadow: 0 0 30px rgba(240,165,0,0.35), 0 8px 20px rgba(0,0,0,0.3);
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+  text-decoration: none;
+  display: inline-flex; align-items: center; gap: 8px;
+  position: relative; overflow: hidden;
+}
+
+.btn-primary::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+  opacity: 0; transition: opacity 0.3s;
+}
+.btn-primary:hover::after { opacity: 1; }
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 50px rgba(240,165,0,0.5), 0 16px 40px rgba(0,0,0,0.4);
+}
+
+.btn-secondary {
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 15px; font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  background: var(--glass);
+  color: var(--white);
+  border: 1px solid var(--border-hi);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s;
+  text-decoration: none;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-secondary:hover {
+  background: var(--glass-md);
+  border-color: rgba(255,255,255,0.25);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.hero-trust {
+  display: flex; align-items: center; gap: 16px;
+  margin-top: 40px;
+  animation: fadeUp 0.6s 0.4s ease both;
+}
+
+.trust-avatars {
+  display: flex;
+}
+.trust-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--obsidian);
+  margin-left: -10px;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+}
+.trust-avatar:first-child { margin-left: 0; }
+.ta1{background:linear-gradient(135deg,#667eea,#764ba2);}
+.ta2{background:linear-gradient(135deg,#f093fb,#f5576c);}
+.ta3{background:linear-gradient(135deg,#4facfe,#00f2fe);}
+.ta4{background:linear-gradient(135deg,#43e97b,#38f9d7);}
+
+.trust-text { font-size: 13px; color: var(--silver); line-height: 1.4; }
+.trust-text strong { color: var(--white); display: block; }
+
+/* ─── Hero Visual ─── */
+.hero-visual {
+  animation: fadeUp 0.8s 0.2s ease both;
+  position: relative;
+}
+
+.hero-card-main {
+  background: var(--glass);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  box-shadow: var(--shadow-card), 0 0 60px rgba(240,165,0,0.06);
+  position: relative; overflow: hidden;
+}
+
+.hero-card-main::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(240,165,0,0.6), transparent);
+}
+
+.card-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.card-title-row {
+  display: flex; align-items: center; gap: 10px;
+}
+
+.card-icon {
+  width: 40px; height: 40px;
+  background: rgba(240,165,0,0.12);
+  border: 1px solid rgba(240,165,0,0.2);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+
+.card-name {
+  font-family: var(--font-display);
+  font-weight: 700; font-size: 16px;
+  color: var(--white);
+}
+
+.card-sub { font-size: 12px; color: var(--silver); margin-top: 1px; }
+
+.live-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(0,255,100,0.08);
+  border: 1px solid rgba(0,255,100,0.2);
+  border-radius: 20px; padding: 4px 10px;
+  font-size: 11px; font-weight: 600;
+  color: #00ff88; letter-spacing: 1px;
+}
+.live-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #00ff88; box-shadow: 0 0 8px #00ff88;
+  animation: pulse 1.5s ease infinite;
+}
+
+/* Sparkline chart */
+.chart-area {
+  height: 80px; margin: 16px 0;
+  position: relative;
+}
+
+.chart-area svg { width: 100%; height: 100%; }
+
+.chart-stats {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 12px;
+  margin-top: 16px;
+}
+
+.cstat {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px;
+  text-align: center;
+}
+.cstat-val {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 700;
+  line-height: 1;
+}
+.cstat-lbl { font-size: 10px; color: var(--silver); margin-top: 4px; letter-spacing: 1px; }
+.green { color: #00ff88; }
+.gold  { color: var(--gold-lt); }
+.blue  { color: var(--cyan); }
+
+/* Floating mini-cards */
+.float-card {
+  position: absolute;
+  background: rgba(7,11,22,0.9);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  box-shadow: var(--shadow-card);
+  animation: float 4s ease-in-out infinite;
+}
+
+.float-card-1 {
+  top: -20px; right: -30px;
+  animation-delay: 0s;
+}
+.float-card-2 {
+  bottom: 20px; left: -40px;
+  animation-delay: -2s;
+}
+
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+.fc-label { font-size: 10px; color: var(--silver); letter-spacing: 1px; margin-bottom: 4px; }
+.fc-val   { font-family: var(--font-display); font-size: 20px; font-weight: 800; }
+.fc-chg   { font-size: 11px; margin-top: 2px; }
+.up  { color: #00ff88; }
+.dn  { color: #ff4466; }
+
+/* ═══════════════════════════════════════════════
+   SECTION HEADER
+═══════════════════════════════════════════════ */
+.section-header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 3px; text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 16px;
+  padding: 4px 14px;
+  background: rgba(240,165,0,0.08);
+  border: 1px solid rgba(240,165,0,0.15);
+  border-radius: 100px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -1.5px;
+  margin-bottom: 18px;
+}
+
+.section-title .accent {
+  background: var(--grad-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section-body {
+  font-size: 17px; color: var(--silver);
+  max-width: 560px; margin: 0 auto;
+  line-height: 1.75; font-weight: 300;
+}
+
+/* ═══════════════════════════════════════════════
+   STATS BAR
+═══════════════════════════════════════════════ */
+.stats-section {
+  padding: 0 24px 100px;
+}
+
+.stats-glass {
+  max-width: 1200px; margin: 0 auto;
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius-xl);
+  padding: 40px 48px;
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 0;
+  box-shadow: var(--shadow-card);
+  position: relative; overflow: hidden;
+}
+
+.stats-glass::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(240,165,0,0.5) 50%, transparent 100%);
+}
+
+.stat-item {
+  text-align: center; padding: 0 24px;
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+.stat-item:last-child { border-right: none; }
+
+.stat-num {
+  font-family: var(--font-display);
+  font-size: clamp(32px,3.5vw,48px);
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.stat-num.g { background: var(--grad-gold); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.stat-num.c { background: var(--grad-sky);  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+.stat-label { font-size: 13px; color: var(--silver); font-weight: 400; }
+.stat-sub   { font-size: 11px; color: var(--muted);  margin-top: 3px; }
+
+/* ═══════════════════════════════════════════════
+   FEATURES SECTION
+═══════════════════════════════════════════════ */
+.features-section {
+  padding: 100px 24px;
+}
+
+.features-grid {
+  max-width: 1200px; margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 20px;
+}
+
+.feat-card {
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+  position: relative; overflow: hidden;
+  cursor: default;
+}
+
+.feat-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(600px circle at var(--mx,50%) var(--my,50%),
+    rgba(240,165,0,0.04), transparent 50%);
+  opacity: 0; transition: opacity 0.3s;
+}
+.feat-card:hover::before { opacity: 1; }
+
+.feat-card:hover {
+  border-color: rgba(240,165,0,0.2);
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-gold);
+  background: var(--glass-md);
+}
+
+/* Large feature card */
+.feat-card.large {
+  grid-column: span 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px; align-items: center;
+}
+
+.feat-icon {
+  width: 52px; height: 52px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.fi-gold { background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.2); }
+.fi-cyan { background: rgba(0,212,255,0.10); border: 1px solid rgba(0,212,255,0.2); }
+.fi-teal { background: rgba(0,255,204,0.08); border: 1px solid rgba(0,255,204,0.2); }
+.fi-ember{ background: rgba(255,77,0,0.10);  border: 1px solid rgba(255,77,0,0.2);  }
+
+.feat-title {
+  font-family: var(--font-display);
+  font-size: 20px; font-weight: 700;
+  margin-bottom: 10px; letter-spacing: -0.3px;
+}
+
+.feat-body {
+  font-size: 14px; color: var(--silver);
+  line-height: 1.7; font-weight: 300;
+}
+
+.feat-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 20px;
+  font-size: 12px; font-weight: 600;
+  color: var(--gold-lt);
+  letter-spacing: 0.5px;
+}
+.feat-tag svg { width:14px; height:14px; }
+
+/* Instrument chips */
+.instrument-chips {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-top: 16px;
+}
+.chip {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 1px;
+}
+.chip-gold  { background: rgba(240,165,0,0.1); color: var(--gold-lt); border: 1px solid rgba(240,165,0,0.2); }
+.chip-cyan  { background: rgba(0,212,255,0.08); color: var(--cyan);    border: 1px solid rgba(0,212,255,0.2); }
+.chip-teal  { background: rgba(0,255,204,0.08); color: var(--teal);    border: 1px solid rgba(0,255,204,0.2); }
+
+/* ═══════════════════════════════════════════════
+   HOW IT WORKS
+═══════════════════════════════════════════════ */
+.how-section {
+  padding: 100px 24px;
+  background: linear-gradient(180deg, transparent 0%, rgba(240,165,0,0.02) 50%, transparent 100%);
+}
+
+.steps-grid {
+  max-width: 1200px; margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 24px;
+  position: relative;
+}
+
+/* Connector line */
+.steps-grid::before {
+  content: '';
+  position: absolute;
+  top: 52px; left: 12.5%; right: 12.5%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent, rgba(240,165,0,0.4), rgba(240,165,0,0.4), rgba(240,165,0,0.4), transparent);
+  z-index: 0;
+}
+
+.step-card {
+  text-align: center; padding: 32px 20px;
+  position: relative; z-index: 1;
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: all 0.3s;
+}
+.step-card:hover {
+  border-color: rgba(240,165,0,0.25);
+  transform: translateY(-4px);
+  background: var(--glass-md);
+}
+
+.step-num {
+  width: 48px; height: 48px;
+  background: var(--grad-gold);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: 20px; font-weight: 800;
+  color: #000; margin: 0 auto 20px;
+  box-shadow: 0 0 20px rgba(240,165,0,0.35);
+}
+
+.step-title {
+  font-family: var(--font-display);
+  font-size: 16px; font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.step-body { font-size: 13px; color: var(--silver); line-height: 1.6; font-weight: 300; }
+
+/* ═══════════════════════════════════════════════
+   SIGNALS PREVIEW SECTION
+═══════════════════════════════════════════════ */
+.signals-section {
+  padding: 100px 24px;
+}
+
+.signals-inner {
+  max-width: 1200px; margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px; align-items: center;
+}
+
+.signals-text { }
+
+.signals-list {
+  display: flex; flex-direction: column; gap: 12px;
+  margin-top: 32px;
+}
+
+.signal-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(12px);
+  transition: all 0.25s;
+  cursor: default;
+}
+.signal-item:hover {
+  border-color: var(--border-hi);
+  background: var(--glass-md);
+  transform: translateX(4px);
+}
+
+.signal-dir {
+  width: 52px; height: 52px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.dir-buy  { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.2); }
+.dir-sell { background: rgba(255,51,102,0.1); border: 1px solid rgba(255,51,102,0.2); }
+
+.sig-info { flex: 1; }
+.sig-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.sig-sym { font-family: var(--font-display); font-size: 15px; font-weight: 700; }
+.sig-badge {
+  padding: 2px 8px; border-radius: 4px;
+  font-size: 10px; font-weight: 700; letter-spacing: 1px;
+}
+.badge-buy  { background: rgba(0,255,136,0.1); color: #00ff88; }
+.badge-sell { background: rgba(255,51,102,0.1); color: #ff4466; }
+.sig-meta { font-size: 12px; color: var(--silver); }
+.sig-pnl  { font-family: var(--font-display); font-size: 16px; font-weight: 700; text-align: right; }
+
+/* Phone mockup */
+.phone-wrap {
+  display: flex; justify-content: center;
+  position: relative;
+}
+
+.phone {
+  width: 260px;
+  background: var(--deep);
+  border: 1px solid var(--border-hi);
+  border-radius: 36px;
+  padding: 16px;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 60px rgba(240,165,0,0.08);
+  position: relative; overflow: hidden;
+}
+
+.phone::before {
+  content: '';
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 80px; height: 4px;
+  background: var(--border-hi);
+  border-radius: 0 0 4px 4px;
+}
+
+.phone-screen {
+  background: var(--void);
+  border-radius: 24px;
+  padding: 18px;
+  border: 1px solid var(--border);
+}
+
+.phone-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.ph-title { font-family: var(--font-display); font-size: 14px; font-weight: 700; }
+.ph-dot { width: 8px; height: 8px; border-radius: 50%; background: #00ff88; box-shadow: 0 0 8px #00ff88; animation: pulse 1.5s infinite; }
+
+.phone-card {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  font-size: 11px;
+}
+.phone-card:last-child { margin-bottom: 0; }
+
+.pc-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.pc-sym { font-weight: 700; font-size: 12px; }
+.pc-dir { padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: 700; }
+.pc-tp-row { display: flex; gap: 4px; margin-top: 6px; }
+.pc-tp {
+  flex: 1; text-align: center; padding: 3px;
+  border-radius: 4px; font-size: 9px; font-weight: 600;
+}
+.tp1 { background: rgba(253,224,71,.1); color: #fde047; }
+.tp2 { background: rgba(251,146,60,.1); color: #fb923c; }
+.tp3 { background: rgba(56,189,248,.1); color: #38bdf8; }
+.tp4 { background: rgba(232,121,249,.1); color: #e879f9; }
+
+/* ═══════════════════════════════════════════════
+   PRICING
+═══════════════════════════════════════════════ */
+.pricing-section {
+  padding: 100px 24px;
+}
+
+.pricing-grid {
+  max-width: 1000px; margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 20px; align-items: start;
+}
+
+.price-card {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 36px 32px;
+  transition: all 0.35s;
+  position: relative; overflow: hidden;
+}
+
+.price-card.featured {
+  background: linear-gradient(160deg, rgba(240,165,0,0.08), rgba(255,77,0,0.04));
+  border-color: rgba(240,165,0,0.3);
+  box-shadow: var(--shadow-gold);
+  transform: scale(1.04);
+}
+
+.price-card.featured::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--grad-gold);
+}
+
+.price-badge {
+  display: inline-block;
+  padding: 4px 12px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; letter-spacing: 1px;
+  background: var(--grad-gold); color: #000;
+  margin-bottom: 20px;
+}
+
+.price-tier {
+  font-family: var(--font-display);
+  font-size: 14px; font-weight: 700;
+  letter-spacing: 3px; text-transform: uppercase;
+  color: var(--silver); margin-bottom: 10px;
+}
+
+.price-amount {
+  display: flex; align-items: flex-start;
+  gap: 4px; margin-bottom: 8px;
+}
+.price-currency { font-size: 20px; font-weight: 600; color: var(--silver); margin-top: 8px; }
+.price-num {
+  font-family: var(--font-display);
+  font-size: 54px; font-weight: 800;
+  line-height: 1; letter-spacing: -2px;
+}
+.price-num.gold { background: var(--grad-gold); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.price-period { font-size: 13px; color: var(--silver); margin-bottom: 24px; }
+
+.price-divider {
+  height: 1px; background: var(--border);
+  margin: 24px 0;
+}
+
+.price-features { list-style: none; }
+.price-features li {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 14px; color: var(--silver);
+  padding: 6px 0; line-height: 1.5;
+}
+.pf-check {
+  width: 18px; height: 18px; flex-shrink: 0;
+  background: rgba(0,255,136,0.1);
+  border: 1px solid rgba(0,255,136,0.2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: #00ff88; margin-top: 2px;
+}
+
+.btn-full {
+  display: block; width: 100%;
+  padding: 14px; border-radius: 12px;
+  text-align: center; margin-top: 28px;
+  font-size: 14px; font-weight: 700;
+  font-family: var(--font-body);
+  cursor: pointer; border: none;
+  transition: all 0.3s; text-decoration: none;
+}
+.btn-full-gold {
+  background: var(--grad-gold); color: #000;
+  box-shadow: 0 0 25px rgba(240,165,0,0.3);
+}
+.btn-full-gold:hover { filter: brightness(1.1); transform: translateY(-2px); }
+
+.btn-full-ghost {
+  background: var(--glass);
+  color: var(--white);
+  border: 1px solid var(--border-hi);
+}
+.btn-full-ghost:hover { background: var(--glass-md); transform: translateY(-2px); }
+
+/* ═══════════════════════════════════════════════
+   CTA SECTION
+═══════════════════════════════════════════════ */
+.cta-section {
+  padding: 80px 24px 120px;
+}
+
+.cta-box {
+  max-width: 900px; margin: 0 auto;
+  background: linear-gradient(135deg,
+    rgba(240,165,0,0.08) 0%,
+    rgba(255,77,0,0.05) 50%,
+    rgba(192,38,211,0.05) 100%);
+  border: 1px solid rgba(240,165,0,0.2);
+  border-radius: var(--radius-xl);
+  padding: 72px 64px;
+  text-align: center;
+  position: relative; overflow: hidden;
+  box-shadow: 0 0 80px rgba(240,165,0,0.06);
+}
+
+.cta-box::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(240,165,0,0.5), transparent);
+}
+
+.cta-title {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  line-height: 1.1;
+  margin-bottom: 18px;
+}
+
+.cta-body {
+  font-size: 17px; color: var(--silver);
+  max-width: 480px; margin: 0 auto 40px;
+  line-height: 1.75; font-weight: 300;
+}
+
+.cta-actions {
+  display: flex; align-items: center;
+  justify-content: center; gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* ═══════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════ */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 60px 24px 32px;
+  position: relative; z-index: 1;
+}
+
+.footer-inner {
+  max-width: 1200px; margin: 0 auto;
+}
+
+.footer-top {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 48px; margin-bottom: 48px;
+}
+
+.footer-brand p {
+  font-size: 14px; color: var(--silver);
+  line-height: 1.7; margin-top: 14px;
+  max-width: 280px; font-weight: 300;
+}
+
+.footer-col h4 {
+  font-family: var(--font-display);
+  font-size: 13px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--white); margin-bottom: 16px;
+}
+
+.footer-col ul { list-style: none; }
+.footer-col li { margin-bottom: 10px; }
+.footer-col a {
+  font-size: 14px; color: var(--silver);
+  text-decoration: none; transition: color 0.2s;
+}
+.footer-col a:hover { color: var(--white); }
+
+.footer-bottom {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+  font-size: 13px; color: var(--muted);
+  flex-wrap: wrap; gap: 12px;
+}
+
+.footer-socials { display: flex; gap: 12px; }
+.social-btn {
+  width: 36px; height: 36px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; text-decoration: none;
+  transition: all 0.2s;
+}
+.social-btn:hover {
+  background: var(--glass-md);
+  border-color: var(--border-hi);
+  transform: translateY(-2px);
+}
+
+/* ═══════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.reveal {
+  opacity: 0; transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible {
+  opacity: 1; transform: translateY(0);
+}
+
+/* Stagger children */
+.reveal-stagger > * {
+  opacity: 0; transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal-stagger.visible > *:nth-child(1) { opacity:1; transform:translateY(0); transition-delay:0.05s; }
+.reveal-stagger.visible > *:nth-child(2) { opacity:1; transform:translateY(0); transition-delay:0.15s; }
+.reveal-stagger.visible > *:nth-child(3) { opacity:1; transform:translateY(0); transition-delay:0.25s; }
+.reveal-stagger.visible > *:nth-child(4) { opacity:1; transform:translateY(0); transition-delay:0.35s; }
+.reveal-stagger.visible > *:nth-child(5) { opacity:1; transform:translateY(0); transition-delay:0.45s; }
+.reveal-stagger.visible > *:nth-child(6) { opacity:1; transform:translateY(0); transition-delay:0.55s; }
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .features-grid { grid-template-columns: 1fr 1fr; }
+  .feat-card.large { grid-column: span 2; }
+  .footer-top { grid-template-columns: 1fr 1fr; gap: 32px; }
+}
+
+@media (max-width: 768px) {
+  .nav-links, .nav-cta { display: none; }
+  .hamburger { display: flex; }
+
+  .hero-grid { grid-template-columns: 1fr; gap: 48px; }
+  .hero-visual { order: -1; }
+  .float-card-1, .float-card-2 { display: none; }
+
+  .stats-glass { grid-template-columns: 1fr 1fr; padding: 32px 24px; }
+  .stat-item { border-right: none; border-bottom: 1px solid var(--border); padding: 20px 0; }
+  .stat-item:nth-child(odd) { border-right: 1px solid var(--border); }
+  .stat-item:last-child, .stat-item:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+
+  .features-grid { grid-template-columns: 1fr; }
+  .feat-card.large { grid-column: span 1; grid-template-columns: 1fr; }
+
+  .steps-grid { grid-template-columns: 1fr 1fr; }
+  .steps-grid::before { display: none; }
+
+  .signals-inner { grid-template-columns: 1fr; }
+  .phone-wrap { order: -1; }
+
+  .pricing-grid { grid-template-columns: 1fr; max-width: 420px; }
+  .price-card.featured { transform: scale(1); }
+
+  .cta-box { padding: 48px 28px; }
+
+  .footer-top { grid-template-columns: 1fr 1fr; }
+  .footer-bottom { flex-direction: column; text-align: center; }
+}
+
+@media (max-width: 480px) {
+  .steps-grid { grid-template-columns: 1fr; }
+  .hero-actions { flex-direction: column; align-items: stretch; }
+  .btn-primary, .btn-secondary { text-align: center; justify-content: center; }
+  .footer-top { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Aurora Canvas -->
+<canvas id="aurora"></canvas>
+
+<!-- ═══ NAVIGATION ═══════════════════════════════ -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-mark">W</div>
+      <span class="nav-logo-text">WOLF FX</span>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how">How It Works</a></li>
+      <li><a href="#signals">Signals</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+    </ul>
+
+    <div class="nav-cta">
+      <a href="#" class="btn-nav btn-ghost">Sign In</a>
+      <a href="#pricing" class="btn-nav btn-gold">Get Started →</a>
+    </div>
+
+    <button class="hamburger" id="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#features" onclick="closeMobile()">Features</a>
+  <a href="#how" onclick="closeMobile()">How It Works</a>
+  <a href="#signals" onclick="closeMobile()">Signals</a>
+  <a href="#pricing" onclick="closeMobile()">Pricing</a>
+  <a href="#" onclick="closeMobile()" class="btn-primary" style="margin-top:16px;justify-content:center;">Get Started →</a>
+</div>
+
+<!-- ═══ HERO ═════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-grid wrap" style="max-width:1200px;margin:0 auto;padding:0 24px;">
+
+    <div class="hero-content">
+      <div class="hero-eyebrow">
+        <div class="hero-eyebrow-dot"></div>
+        <span>AI-Powered Algorithmic Trading</span>
+      </div>
+
+      <h1 class="hero-title">
+        Trade Smarter.<br>
+        <span class="line-gold">Win Consistently.</span>
+      </h1>
+
+      <p class="hero-body">
+        Wolf FX V5 Pro deploys institutional-grade algorithms across Forex, Gold, and Bitcoin — executing precision entries with intelligent breakeven management and multi-target profit taking.
+      </p>
+
+      <div class="hero-actions">
+        <a href="#pricing" class="btn-primary">
+          🚀 Start Trading Free
+        </a>
+        <a href="#how" class="btn-secondary">
+          Watch Demo ▶
+        </a>
+      </div>
+
+      <div class="hero-trust">
+        <div class="trust-avatars">
+          <div class="trust-avatar ta1">👤</div>
+          <div class="trust-avatar ta2">👤</div>
+          <div class="trust-avatar ta3">👤</div>
+          <div class="trust-avatar ta4">👤</div>
+        </div>
+        <div class="trust-text">
+          <strong>2,400+ active traders</strong>
+          Rated 4.9 / 5.0 on MT5 marketplace
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <!-- Floating cards -->
+      <div class="float-card float-card-1">
+        <div class="fc-label">BTCUSD</div>
+        <div class="fc-val gold">$83,421</div>
+        <div class="fc-chg up">▲ +2.34% today</div>
+      </div>
+
+      <div class="float-card float-card-2">
+        <div class="fc-label">WIN RATE</div>
+        <div class="fc-val" style="color:var(--cyan)">72.4%</div>
+        <div class="fc-chg" style="color:var(--silver)">Last 30 days</div>
+      </div>
+
+      <!-- Main card -->
+      <div class="hero-card-main">
+        <div class="card-header">
+          <div class="card-title-row">
+            <div class="card-icon">📊</div>
+            <div>
+              <div class="card-name">Wolf FX Dashboard</div>
+              <div class="card-sub">Live performance · H1 chart</div>
+            </div>
+          </div>
+          <div class="live-badge">
+            <div class="live-dot"></div>
+            LIVE
+          </div>
+        </div>
+
+        <!-- SVG Sparkline -->
+        <div class="chart-area">
+          <svg viewBox="0 0 400 80" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#f0a500" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="#f0a500" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,60 L20,55 L40,58 L60,45 L80,48 L100,35 L120,38 L140,25 L160,28 L180,18 L200,22 L220,15 L240,20 L260,10 L280,14 L300,8 L320,12 L340,5 L360,9 L380,3 L400,6 L400,80 L0,80 Z"
+                  fill="url(#chartGrad)"/>
+            <path d="M0,60 L20,55 L40,58 L60,45 L80,48 L100,35 L120,38 L140,25 L160,28 L180,18 L200,22 L220,15 L240,20 L260,10 L280,14 L300,8 L320,12 L340,5 L360,9 L380,3 L400,6"
+                  fill="none" stroke="#f0a500" stroke-width="2" stroke-linecap="round"/>
+            <!-- Glowing dot at end -->
+            <circle cx="400" cy="6" r="5" fill="#f0a500" opacity="0.9">
+              <animate attributeName="r" values="4;7;4" dur="2s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </div>
+
+        <div class="chart-stats">
+          <div class="cstat">
+            <div class="cstat-val green">+$3,241</div>
+            <div class="cstat-lbl">THIS MONTH</div>
+          </div>
+          <div class="cstat">
+            <div class="cstat-val gold">72.4%</div>
+            <div class="cstat-lbl">WIN RATE</div>
+          </div>
+          <div class="cstat">
+            <div class="cstat-val blue">1:2.8</div>
+            <div class="cstat-lbl">RISK:REWARD</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ STATS ═════════════════════════════════════ -->
+<section class="stats-section">
+  <div class="stats-glass reveal">
+    <div class="stat-item">
+      <div class="stat-num g">$2.4M+</div>
+      <div class="stat-label">Total Profits Generated</div>
+      <div class="stat-sub">Across all users · 2024</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num c">2,400+</div>
+      <div class="stat-label">Active Traders</div>
+      <div class="stat-sub">In 47 countries</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num g">72.4%</div>
+      <div class="stat-label">Average Win Rate</div>
+      <div class="stat-sub">Verified live accounts</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num c">24/7</div>
+      <div class="stat-label">Automated Execution</div>
+      <div class="stat-sub">Never misses a signal</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURES ══════════════════════════════════ -->
+<section class="features-section" id="features">
+  <div class="wrap">
+    <div class="section-header reveal">
+      <div class="eyebrow">CAPABILITIES</div>
+      <h2 class="section-title">Built for <span class="accent">serious traders</span></h2>
+      <p class="section-body">Every feature is engineered to give you an institutional edge — from multi-symbol breakeven logic to real-time Telegram alerts.</p>
+    </div>
+
+    <div class="features-grid reveal-stagger">
+
+      <!-- Large card -->
+      <div class="feat-card large">
+        <div>
+          <div class="feat-icon fi-gold">🎯</div>
+          <h3 class="feat-title">Multi-Target Profit System</h3>
+          <p class="feat-body">Automatically scale out at four distinct profit levels. TP1 locks early gains, TP2–TP4 ride the full move — all visualised on your chart with colour-coded levels.</p>
+          <div class="feat-tag">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2 4 5 .7-3.5 3.4.8 5L8 12l-4.3 2.1.8-5L1 5.7 6 5z"/></svg>
+            TP1 → TP2 → TP3 → TP4 levels
+          </div>
+        </div>
+        <div>
+          <div style="background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <span style="font-size:13px;font-weight:700;">BTCUSD · BUY</span>
+              <span style="color:#00ff88;font-size:12px;">● ACTIVE</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 10px;background:rgba(255,51,102,.08);border-radius:6px;border:1px solid rgba(255,51,102,.15);">
+                <span style="color:#ff4466;">✖ SL</span><span style="color:var(--silver);">$62,900</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 10px;background:rgba(240,165,0,.06);border-radius:6px;border-left:2px solid var(--gold);">
+                <span style="color:var(--gold-lt);">Entry</span><span style="color:var(--white);font-weight:700;">$83,450</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 10px;background:rgba(253,224,71,.06);border-radius:6px;">
+                <span style="color:#fde047;">🎯 TP1</span><span>$98,450</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 10px;background:rgba(251,146,60,.06);border-radius:6px;">
+                <span style="color:#fb923c;">🎯 TP2</span><span>$109,450</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 10px;background:rgba(56,189,248,.06);border-radius:6px;">
+                <span style="color:#38bdf8;">🎯 TP3</span><span>$118,450</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 10px;background:rgba(232,121,249,.06);border-radius:6px;">
+                <span style="color:#e879f9;">🎯 TP4</span><span>$133,450</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon fi-cyan">🛡</div>
+        <h3 class="feat-title">Smart Breakeven Engine</h3>
+        <p class="feat-body">Instrument-aware breakeven — Forex at 20pts, Gold at 500pts, BTC at 20,000pts. Automatically moves SL to lock profit then trails continuously.</p>
+        <div class="instrument-chips">
+          <span class="chip chip-cyan">FOREX</span>
+          <span class="chip chip-gold">XAUUSD</span>
+          <span class="chip chip-teal">BTCUSD</span>
+        </div>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon fi-gold">📱</div>
+        <h3 class="feat-title">Telegram Signal Alerts</h3>
+        <p class="feat-body">Every signal fires instantly to your group or personal chat — full entry, SL, and all four TP levels. See signals on mobile without opening MT5.</p>
+        <div class="feat-tag">Real-time · Formatted · Group-ready</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon fi-ember">⚡</div>
+        <h3 class="feat-title">Account Protection</h3>
+        <p class="feat-body">Automatic 50% drawdown guard closes all positions and halts the EA when equity drops to the threshold — protecting your capital 24/7.</p>
+        <div class="feat-tag" style="color:var(--cyan);">Fires Telegram alert on trigger</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon fi-teal">🔄</div>
+        <h3 class="feat-title">Multi-Trade Execution</h3>
+        <p class="feat-body">Run up to 5 simultaneous positions with 60-second interval control. Risk-based lot sizing automatically scales with your account balance.</p>
+        <div class="feat-tag" style="color:var(--teal);">Max 5 trades · 60s interval</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══ HOW IT WORKS ══════════════════════════════ -->
+<section class="how-section" id="how">
+  <div class="wrap">
+    <div class="section-header reveal">
+      <div class="eyebrow">PROCESS</div>
+      <h2 class="section-title">Up and running in <span class="accent">4 steps</span></h2>
+      <p class="section-body">From download to live trading in under 10 minutes — no coding required.</p>
+    </div>
+
+    <div class="steps-grid reveal-stagger">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <h3 class="step-title">Download the EA</h3>
+        <p class="step-body">Download WolfFX_Scalper_V5_Pro.mq5 and copy it to your MT5 Experts folder. Compile with F7 — zero errors.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <h3 class="step-title">Configure Telegram</h3>
+        <p class="step-body">Create a bot via @BotFather, add it to your signal group as admin, paste your token and Chat ID into EA inputs.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <h3 class="step-title">Attach to Chart</h3>
+        <p class="step-body">Drag the EA onto any chart — EURUSD, XAUUSD or BTCUSD. It auto-detects the instrument and configures parameters.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">4</div>
+        <h3 class="step-title">Let It Trade</h3>
+        <p class="step-body">The EA monitors markets 24/7, fires signals to Telegram, draws levels on chart, and manages every trade automatically.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SIGNALS PREVIEW ═══════════════════════════ -->
+<section class="signals-section" id="signals">
+  <div class="signals-inner" style="max-width:1200px;margin:0 auto;">
+
+    <div class="signals-text reveal">
+      <div class="eyebrow">LIVE SIGNALS</div>
+      <h2 class="section-title" style="text-align:left;margin-bottom:14px;">
+        Signals fired to your<br><span class="accent">group instantly</span>
+      </h2>
+      <p class="section-body" style="text-align:left;margin:0 0 0 0;">
+        Every entry, breakeven move, and TP hit is communicated in real time. Your group members see the same signals the EA fires.
+      </p>
+
+      <div class="signals-list">
+        <div class="signal-item">
+          <div class="signal-dir dir-buy">📈</div>
+          <div class="sig-info">
+            <div class="sig-top">
+              <span class="sig-sym">BTCUSD</span>
+              <span class="sig-badge badge-buy">BUY</span>
+              <span style="font-size:11px;color:var(--silver);">TREND</span>
+            </div>
+            <div class="sig-meta">Entry: $83,450 · SL: $62,900 · TP4: $133,450</div>
+          </div>
+          <div class="sig-pnl up">+$1,240</div>
+        </div>
+
+        <div class="signal-item">
+          <div class="signal-dir dir-sell">📉</div>
+          <div class="sig-info">
+            <div class="sig-top">
+              <span class="sig-sym">XAUUSD</span>
+              <span class="sig-badge badge-sell">SELL</span>
+              <span style="font-size:11px;color:var(--silver);">BREAKOUT</span>
+            </div>
+            <div class="sig-meta">Entry: $3,085 · SL: $3,585 · TP4: $1,585</div>
+          </div>
+          <div class="sig-pnl up">+$420</div>
+        </div>
+
+        <div class="signal-item">
+          <div class="signal-dir dir-buy">📈</div>
+          <div class="sig-info">
+            <div class="sig-top">
+              <span class="sig-sym">EURUSD</span>
+              <span class="sig-badge badge-buy">BUY</span>
+              <span style="font-size:11px;color:var(--silver);">RANGE</span>
+            </div>
+            <div class="sig-meta">Entry: 1.08452 · SL: 1.08252 · TP4: 1.08952</div>
+          </div>
+          <div class="sig-pnl up">+$185</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phone mockup -->
+    <div class="phone-wrap reveal">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-header">
+            <span class="ph-title">🐺 WOLF FX</span>
+            <div class="ph-dot"></div>
+          </div>
+
+          <div class="phone-card">
+            <div class="pc-row">
+              <span class="pc-sym">📈 BTCUSD</span>
+              <span class="pc-dir" style="background:rgba(0,255,136,.12);color:#00ff88;">BUY</span>
+            </div>
+            <div style="font-size:10px;color:var(--silver);">Entry: $83,450 · SL: $62,900</div>
+            <div class="pc-tp-row">
+              <div class="pc-tp tp1">TP1</div>
+              <div class="pc-tp tp2">TP2</div>
+              <div class="pc-tp tp3">TP3</div>
+              <div class="pc-tp tp4">TP4</div>
+            </div>
+          </div>
+
+          <div class="phone-card">
+            <div class="pc-row">
+              <span class="pc-sym">✅ BE SET</span>
+              <span style="color:var(--cyan);font-size:10px;">BTCUSD #8821</span>
+            </div>
+            <div style="font-size:10px;color:var(--silver);">SL moved to $84,200 (+lock)</div>
+          </div>
+
+          <div class="phone-card">
+            <div class="pc-row">
+              <span class="pc-sym">📉 XAUUSD</span>
+              <span class="pc-dir" style="background:rgba(255,51,102,.12);color:#ff4466;">SELL</span>
+            </div>
+            <div style="font-size:10px;color:var(--silver);">Entry: $3,085 · SL: $3,585</div>
+            <div class="pc-tp-row">
+              <div class="pc-tp tp1">TP1</div>
+              <div class="pc-tp tp2">TP2</div>
+              <div class="pc-tp tp3">TP3</div>
+              <div class="pc-tp tp4">TP4</div>
+            </div>
+          </div>
+
+          <div class="phone-card">
+            <div class="pc-row">
+              <span class="pc-sym">🏆 TP4 HIT</span>
+              <span style="color:#e879f9;font-size:10px;">+$1,240</span>
+            </div>
+            <div style="font-size:10px;color:var(--silver);">BTCUSD BUY closed in full</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ PRICING ════════════════════════════════════ -->
+<section class="pricing-section" id="pricing">
+  <div class="wrap">
+    <div class="section-header reveal">
+      <div class="eyebrow">PRICING</div>
+      <h2 class="section-title">Simple, <span class="accent">transparent</span> pricing</h2>
+      <p class="section-body">No hidden fees. Cancel anytime. Start free and upgrade when you're ready.</p>
+    </div>
+
+    <div class="pricing-grid reveal-stagger">
+
+      <div class="price-card">
+        <div class="price-tier">Starter</div>
+        <div class="price-amount">
+          <span class="price-currency">$</span>
+          <span class="price-num">0</span>
+        </div>
+        <div class="price-period">Free forever</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li><div class="pf-check">✓</div>1 currency pair</li>
+          <li><div class="pf-check">✓</div>Basic BUY/SELL signals</li>
+          <li><div class="pf-check">✓</div>TP1 & TP2 only</li>
+          <li><div class="pf-check">✓</div>Telegram alerts</li>
+          <li><div class="pf-check">✓</div>Community support</li>
+        </ul>
+        <a href="#" class="btn-full btn-full-ghost">Get Started Free</a>
+      </div>
+
+      <div class="price-card featured">
+        <div class="price-badge">MOST POPULAR</div>
+        <div class="price-tier">Pro</div>
+        <div class="price-amount">
+          <span class="price-currency">$</span>
+          <span class="price-num gold">49</span>
+        </div>
+        <div class="price-period">per month</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li><div class="pf-check">✓</div>All pairs — Forex, Gold, BTC</li>
+          <li><div class="pf-check">✓</div>Full TP1/2/3/4 system</li>
+          <li><div class="pf-check">✓</div>Smart breakeven engine</li>
+          <li><div class="pf-check">✓</div>Up to 5 simultaneous trades</li>
+          <li><div class="pf-check">✓</div>Account protection (50%)</li>
+          <li><div class="pf-check">✓</div>Telegram group signals</li>
+          <li><div class="pf-check">✓</div>Live dashboard website</li>
+          <li><div class="pf-check">✓</div>Priority support</li>
+        </ul>
+        <a href="#" class="btn-full btn-full-gold">Start Pro Trial →</a>
+      </div>
+
+      <div class="price-card">
+        <div class="price-tier">Lifetime</div>
+        <div class="price-amount">
+          <span class="price-currency">$</span>
+          <span class="price-num">299</span>
+        </div>
+        <div class="price-period">one-time payment</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li><div class="pf-check">✓</div>Everything in Pro</li>
+          <li><div class="pf-check">✓</div>Lifetime updates</li>
+          <li><div class="pf-check">✓</div>Source code access</li>
+          <li><div class="pf-check">✓</div>Custom pair configuration</li>
+          <li><div class="pf-check">✓</div>1-on-1 onboarding call</li>
+          <li><div class="pf-check">✓</div>White-label rights</li>
+        </ul>
+        <a href="#" class="btn-full btn-full-ghost">Get Lifetime Access</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA ════════════════════════════════════════ -->
+<section class="cta-section">
+  <div class="wrap">
+    <div class="cta-box reveal">
+      <div class="eyebrow" style="margin-bottom:24px;">GET STARTED TODAY</div>
+      <h2 class="cta-title">
+        Your edge in the<br>
+        <span style="background:var(--grad-hero);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+          market starts here
+        </span>
+      </h2>
+      <p class="cta-body">
+        Join 2,400+ traders already using Wolf FX to automate their strategy across Forex, Gold and Bitcoin — 24 hours a day.
+      </p>
+      <div class="cta-actions">
+        <a href="#pricing" class="btn-primary" style="font-size:16px;padding:16px 32px;">
+          🚀 Start Trading Free
+        </a>
+        <a href="#signals" class="btn-secondary" style="font-size:16px;padding:16px 32px;">
+          View Live Signals
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ════════════════════════════════════ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="#" class="nav-logo" style="text-decoration:none;">
+          <div class="nav-logo-mark">W</div>
+          <span class="nav-logo-text">WOLF FX</span>
+        </a>
+        <p>Institutional-grade algorithmic trading for independent traders. Automated, precise, and always on.</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#">Features</a></li>
+          <li><a href="#">Pricing</a></li>
+          <li><a href="#">Changelog</a></li>
+          <li><a href="#">Roadmap</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="#">Documentation</a></li>
+          <li><a href="#">Setup Guide</a></li>
+          <li><a href="#">EA Download</a></li>
+          <li><a href="#">Dashboard</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Contact</a></li>
+          <li><a href="#">Disclaimer</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 Wolf FX Pro. All rights reserved. Trading involves risk.</span>
+      <div class="footer-socials">
+        <a href="#" class="social-btn" title="Telegram">✈</a>
+        <a href="#" class="social-btn" title="Twitter">𝕏</a>
+        <a href="#" class="social-btn" title="YouTube">▶</a>
+        <a href="#" class="social-btn" title="Discord">💬</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════════
+   JAVASCRIPT
+═══════════════════════════════════════════════ -->
+<script>
+/* ─── Aurora Canvas ─── */
+(function(){
+  const canvas = document.getElementById('aurora');
+  const ctx    = canvas.getContext('2d');
+  let W, H, t = 0;
+
+  function resize(){
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const orbs = [
+    { x:0.15, y:0.3,  r:0.55, hue:35,  spd:0.0003, ox:0.06, oy:0.04 },
+    { x:0.75, y:0.6,  r:0.50, hue:200, spd:0.0004, ox:0.05, oy:0.07 },
+    { x:0.5,  y:0.15, r:0.45, hue:280, spd:0.0002, ox:0.08, oy:0.03 },
+    { x:0.85, y:0.2,  r:0.35, hue:20,  spd:0.0005, ox:0.04, oy:0.06 },
+    { x:0.2,  y:0.85, r:0.40, hue:180, spd:0.0003, ox:0.07, oy:0.05 },
+  ];
+
+  function draw(){
+    ctx.clearRect(0, 0, W, H);
+    t += 1;
+
+    orbs.forEach(o => {
+      const px = (o.x + Math.sin(t * o.spd * 1.3) * o.ox) * W;
+      const py = (o.y + Math.cos(t * o.spd)       * o.oy) * H;
+      const radius = o.r * Math.min(W, H);
+
+      const grad = ctx.createRadialGradient(px, py, 0, px, py, radius);
+      grad.addColorStop(0,   `hsla(${o.hue},90%,60%, 0.07)`);
+      grad.addColorStop(0.4, `hsla(${o.hue},80%,50%, 0.04)`);
+      grad.addColorStop(1,   `hsla(${o.hue},70%,40%, 0)`);
+
+      ctx.beginPath();
+      ctx.arc(px, py, radius, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+    });
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ─── Navbar scroll ─── */
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 30);
+});
+
+/* ─── Mobile menu ─── */
+const hamburger   = document.getElementById('hamburger');
+const mobileMenu  = document.getElementById('mobileMenu');
+let menuOpen = false;
+
+hamburger.addEventListener('click', () => {
+  menuOpen = !menuOpen;
+  mobileMenu.classList.toggle('open', menuOpen);
+  const spans = hamburger.querySelectorAll('span');
+  if(menuOpen){
+    spans[0].style.transform = 'rotate(45deg) translate(5px,5px)';
+    spans[1].style.opacity   = '0';
+    spans[2].style.transform = 'rotate(-45deg) translate(5px,-5px)';
+  } else {
+    spans.forEach(s => { s.style.transform=''; s.style.opacity=''; });
+  }
+});
+
+function closeMobile(){
+  menuOpen = false;
+  mobileMenu.classList.remove('open');
+  hamburger.querySelectorAll('span').forEach(s => { s.style.transform=''; s.style.opacity=''; });
+}
+
+/* ─── Scroll reveal ─── */
+const revealEls = document.querySelectorAll('.reveal, .reveal-stagger');
+const observer  = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+revealEls.forEach(el => observer.observe(el));
+
+/* ─── Feat card mouse glow ─── */
+document.querySelectorAll('.feat-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const rect = card.getBoundingClientRect();
+    card.style.setProperty('--mx', ((e.clientX - rect.left) / rect.width * 100) + '%');
+    card.style.setProperty('--my', ((e.clientY - rect.top)  / rect.height * 100) + '%');
+  });
+});
+
+/* ─── Smooth anchor scroll ─── */
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if(target){ e.preventDefault(); target.scrollIntoView({ behavior:'smooth', block:'start' }); }
+  });
+});
+</script>
+
+</body>
+</html>

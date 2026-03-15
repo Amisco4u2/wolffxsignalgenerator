@@ -118,6 +118,187 @@ body::after{
 .page-section.active{display:block;}
 
 /* ═══════════════════════════════════════════════════
+   LOGIN SCREEN
+═══════════════════════════════════════════════════ */
+#login{
+  position:fixed;inset:0;z-index:5000;
+  display:none;
+  align-items:center;justify-content:center;
+  background:var(--bg);
+}
+#login.active{display:flex;}
+
+.login-wrap{
+  width:100%;max-width:420px;
+  padding:20px;
+  animation:loginReveal .5s cubic-bezier(.4,0,.2,1) both;
+}
+@keyframes loginReveal{
+  from{opacity:0;transform:translateY(28px) scale(.97);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+
+.login-card{
+  background:linear-gradient(160deg,#0e1a2e,#08101e);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:var(--r-xl);
+  padding:44px 40px 40px;
+  box-shadow:0 32px 80px rgba(0,0,0,.7),
+             0 0 0 1px rgba(245,166,35,.06) inset,
+             0 1px 0 rgba(255,255,255,.08) inset;
+  position:relative;overflow:hidden;
+}
+/* Gold top shimmer */
+.login-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent 0%,var(--gold) 40%,var(--gold-lt) 60%,transparent 100%);
+  box-shadow:0 0 20px rgba(245,166,35,.5);
+}
+
+.login-logo{
+  text-align:center;margin-bottom:36px;
+}
+.login-hex{
+  width:64px;height:64px;position:relative;
+  display:inline-flex;align-items:center;justify-content:center;
+  margin-bottom:14px;
+}
+.login-hex::before{
+  content:'';position:absolute;inset:0;
+  background:var(--grad-gold);
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  animation:hpulse 3s ease infinite;
+}
+.login-hex span{position:relative;z-index:1;font-size:28px;}
+.login-title{
+  font-family:var(--font-mono);font-size:20px;font-weight:900;
+  letter-spacing:4px;color:var(--gold);
+  text-shadow:0 0 24px rgba(245,166,35,.5);
+  display:block;
+}
+.login-sub{
+  font-family:var(--font-body);font-size:12px;
+  color:rgba(160,192,224,.5);letter-spacing:2px;
+  margin-top:5px;display:block;
+}
+
+/* Form fields */
+.login-field{margin-bottom:18px;position:relative;}
+.login-field label{
+  display:block;font-family:var(--font-display);
+  font-size:10px;font-weight:700;letter-spacing:1.5px;
+  color:rgba(160,192,224,.65);text-transform:uppercase;
+  margin-bottom:8px;
+}
+.login-field .field-icon{
+  position:absolute;left:14px;bottom:12px;
+  font-size:16px;pointer-events:none;opacity:.5;
+}
+.login-field input{
+  width:100%;
+  background:rgba(6,12,22,.9);
+  border:1.5px solid rgba(255,255,255,.12);
+  border-radius:var(--r-sm);
+  padding:13px 14px 13px 42px;
+  color:var(--white);
+  font-family:var(--font-body);font-size:14px;
+  outline:none;
+  transition:border-color .2s,background .2s,box-shadow .2s;
+}
+.login-field input:focus{
+  border-color:var(--gold);
+  background:rgba(245,166,35,.04);
+  box-shadow:0 0 0 3px rgba(245,166,35,.1);
+}
+.login-field input::placeholder{color:rgba(160,192,224,.3);}
+
+/* Toggle password visibility */
+.pwd-toggle{
+  position:absolute;right:14px;bottom:14px;
+  background:none;border:none;cursor:pointer;
+  color:rgba(160,192,224,.4);font-size:16px;
+  transition:color .2s;padding:0;
+}
+.pwd-toggle:hover{color:rgba(160,192,224,.8);}
+
+/* Error message */
+.login-error{
+  display:none;
+  background:rgba(255,51,102,.1);
+  border:1px solid rgba(255,51,102,.3);
+  border-radius:var(--r-sm);
+  padding:10px 14px;margin-bottom:18px;
+  font-family:var(--font-body);font-size:13px;
+  color:#ff6688;text-align:center;
+  animation:errShake .35s ease;
+}
+.login-error.show{display:block;}
+@keyframes errShake{
+  0%,100%{transform:translateX(0);}
+  20%,60%{transform:translateX(-6px);}
+  40%,80%{transform:translateX(6px);}
+}
+
+/* Login button */
+.login-btn{
+  width:100%;padding:15px;
+  background:var(--grad-gold);color:#000;
+  border:none;border-radius:var(--r-sm);
+  font-family:var(--font-display);font-size:15px;font-weight:800;
+  letter-spacing:.5px;cursor:pointer;
+  box-shadow:0 0 30px rgba(245,166,35,.35),0 8px 24px rgba(0,0,0,.3);
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  position:relative;overflow:hidden;
+  margin-top:6px;
+}
+.login-btn::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.2),transparent);
+  opacity:0;transition:opacity .3s;
+}
+.login-btn:hover::after{opacity:1;}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 0 50px rgba(245,166,35,.5),0 14px 36px rgba(0,0,0,.4);}
+.login-btn:active{transform:translateY(0);}
+.login-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+
+/* Loading spinner inside button */
+.login-btn .spinner{
+  display:none;
+  width:16px;height:16px;
+  border:2px solid rgba(0,0,0,.3);
+  border-top-color:#000;
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+  margin:0 auto;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.login-footer{
+  text-align:center;margin-top:22px;
+  font-size:11px;color:rgba(160,192,224,.3);
+  font-family:var(--font-body);line-height:1.7;
+}
+
+/* Session badge (top right when logged in) */
+.session-badge{
+  display:none;
+  align-items:center;gap:7px;
+  background:rgba(245,166,35,.08);
+  border:1px solid rgba(245,166,35,.2);
+  border-radius:20px;padding:5px 12px;
+  font-size:10px;font-family:var(--font-mono);
+  letter-spacing:1.5px;color:var(--gold);
+  cursor:pointer;transition:all .2s;
+}
+.session-badge:hover{background:rgba(245,166,35,.14);border-color:rgba(245,166,35,.35);}
+.session-badge.visible{display:flex;}
+.session-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--lime);box-shadow:0 0 6px var(--lime);
+  animation:blink 2s ease infinite;
+}
+
+/* ═══════════════════════════════════════════════════
    NAVIGATION
 ═══════════════════════════════════════════════════ */
 nav{
@@ -1047,6 +1228,48 @@ canvas.echart{width:100%;height:110px;display:block;}
 <canvas id="aurora"></canvas>
 
 <!-- ═══════════════════════════════════════════════════
+     LOGIN SCREEN
+═══════════════════════════════════════════════════ -->
+<div id="login" class="active">
+  <div class="login-wrap">
+    <div class="login-card">
+
+      <div class="login-logo">
+        <div class="login-hex"><span>🐺</span></div>
+        <span class="login-title">WOLF FX</span>
+        <span class="login-sub">COMMAND CENTER · V5 PRO</span>
+      </div>
+
+      <div class="login-error" id="loginErr">Invalid username or password</div>
+
+      <div class="login-field">
+        <label>Username</label>
+        <span class="field-icon">👤</span>
+        <input type="text" id="loginUser" placeholder="Enter your username" autocomplete="username"/>
+      </div>
+
+      <div class="login-field">
+        <label>Password</label>
+        <span class="field-icon">🔒</span>
+        <input type="password" id="loginPass" placeholder="Enter your password" autocomplete="current-password"/>
+        <button class="pwd-toggle" id="pwdToggle" title="Show/hide password">👁</button>
+      </div>
+
+      <button class="login-btn" id="loginBtn" onclick="doLogin()">
+        <span id="loginBtnTxt">ACCESS DASHBOARD</span>
+        <div class="spinner" id="loginSpinner"></div>
+      </button>
+
+      <div class="login-footer">
+        🔐 Secure access · Wolf FX V5 Pro<br>
+        Authorised personnel only
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
      NAVIGATION
 ═══════════════════════════════════════════════════ -->
 <nav id="navbar">
@@ -1064,6 +1287,10 @@ canvas.echart{width:100%;height:110px;display:block;}
     <div class="nav-right nav-right-desktop">
       <div class="live-pill"><div class="live-dot"></div>LIVE</div>
       <div id="clk">--:--:-- UTC</div>
+      <div class="session-badge" id="sessionBadge" title="Click to logout">
+        <div class="session-dot"></div>
+        <span id="sessionUser">AMIN</span>
+      </div>
       <a href="#" class="btn-nav btn-ghost" data-page="landing">Home</a>
       <a href="#" class="btn-nav btn-gold" data-page="dashboard">⚡ Live Dashboard</a>
     </div>
@@ -1541,10 +1768,139 @@ canvas.echart{width:100%;height:110px;display:block;}
   draw();
 })();
 
+/* ═══════════════════════════════════════════════════
+   AUTH — SHA-256 hashed credentials
+   Plain text credentials never stored in runtime.
+   Web Crypto API computes hash at load time only.
+═══════════════════════════════════════════════════ */
+async function sha256(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// Runtime hash store — filled by initAuth(), never plain text
+const AUTH={user:'',pass:''};
+
+let authSession={loggedIn:false,user:'',loginTime:null};
+
+function checkSession(){
+  try{
+    const s=JSON.parse(sessionStorage.getItem('wfx_session')||'null');
+    if(s&&s.loggedIn&&s.user){authSession=s;return true;}
+  }catch(e){}
+  return false;
+}
+
+// Compute hashes once at startup
+(async function initAuth(){
+  AUTH.user=await sha256('Amisco4u2');
+  AUTH.pass=await sha256('Amiena702$');
+  if(checkSession()){
+    document.getElementById('login').classList.remove('active');
+    showSessionBadge(authSession.user);
+  }
+})();
+
+// Password visibility toggle
+document.getElementById('pwdToggle').addEventListener('click',function(){
+  const i=document.getElementById('loginPass');
+  const show=i.type==='text';
+  i.type=show?'password':'text';
+  this.textContent=show?'👁':'🙈';
+});
+
+// Enter key on either field triggers login
+['loginUser','loginPass'].forEach(id=>{
+  document.getElementById(id).addEventListener('keydown',e=>{
+    if(e.key==='Enter') doLogin();
+  });
+});
+
+async function doLogin(){
+  const btn=document.getElementById('loginBtn');
+  const spinner=document.getElementById('loginSpinner');
+  const btnTxt=document.getElementById('loginBtnTxt');
+  const errEl=document.getElementById('loginErr');
+  const user=document.getElementById('loginUser').value.trim();
+  const pass=document.getElementById('loginPass').value;
+
+  errEl.classList.remove('show');
+
+  if(!user||!pass){showLoginError('Please enter both username and password');return;}
+
+  // Loading state
+  btn.disabled=true;btnTxt.style.display='none';spinner.style.display='block';
+  // Deliberate delay — slows brute force attempts
+  await new Promise(r=>setTimeout(r,700));
+
+  try{
+    const uh=await sha256(user);
+    const ph=await sha256(pass);
+
+    if(uh===AUTH.user&&ph===AUTH.pass){
+      // ✅ Success
+      authSession={loggedIn:true,user:user.toUpperCase(),loginTime:Date.now()};
+      try{sessionStorage.setItem('wfx_session',JSON.stringify(authSession));}catch(e){}
+
+      // Fade card out
+      const card=document.querySelector('.login-card');
+      card.style.cssText='transition:opacity .3s,transform .3s;opacity:0;transform:scale(.95) translateY(-12px)';
+      await new Promise(r=>setTimeout(r,320));
+
+      document.getElementById('login').classList.remove('active');
+      showSessionBadge(user.toUpperCase());
+      showPage('dashboard');
+
+    }else{
+      // ❌ Wrong credentials — shake card, clear password
+      showLoginError('Invalid username or password');
+      const card=document.querySelector('.login-card');
+      card.style.animation='none';
+      void card.offsetWidth; // reflow to restart animation
+      card.style.animation='errShake .4s ease';
+      document.getElementById('loginPass').value='';
+      document.getElementById('loginPass').focus();
+    }
+  }finally{
+    btn.disabled=false;btnTxt.style.display='block';spinner.style.display='none';
+  }
+}
+
+function showLoginError(msg){
+  const e=document.getElementById('loginErr');
+  e.textContent=msg;e.classList.add('show');
+}
+
+function showSessionBadge(username){
+  const b=document.getElementById('sessionBadge');
+  document.getElementById('sessionUser').textContent=username;
+  b.classList.add('visible');
+  b.onclick=doLogout;
+}
+
+function doLogout(){
+  if(!confirm('Log out of Wolf FX Dashboard?'))return;
+  try{sessionStorage.removeItem('wfx_session');}catch(e){}
+  authSession={loggedIn:false,user:'',loginTime:null};
+  document.getElementById('sessionBadge').classList.remove('visible');
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginErr').classList.remove('show');
+  const card=document.querySelector('.login-card');
+  card.style.cssText='';
+  document.getElementById('login').classList.add('active');
+  showPage('landing');
+}
+
 /* ─── Page switching ──────────────────────────── */
 let currentPage='landing';
 
 function showPage(id){
+  // Auth gate — dashboard requires login
+  if(id==='dashboard' && !authSession.loggedIn){
+    document.getElementById('login').classList.add('active');
+    return;
+  }
   document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   currentPage=id;

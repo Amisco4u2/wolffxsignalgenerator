@@ -1242,23 +1242,31 @@ canvas.echart{width:100%;height:110px;display:block;}
 
       <div class="login-error" id="loginErr">Invalid username or password</div>
 
-      <div class="login-field">
-        <label>Username</label>
-        <span class="field-icon">👤</span>
-        <input type="text" id="loginUser" placeholder="Enter your username" autocomplete="username"/>
-      </div>
+      <form id="loginForm" autocomplete="on" onsubmit="doLogin();return false;">
 
-      <div class="login-field">
-        <label>Password</label>
-        <span class="field-icon">🔒</span>
-        <input type="password" id="loginPass" placeholder="Enter your password" autocomplete="current-password"/>
-        <button class="pwd-toggle" id="pwdToggle" title="Show/hide password">👁</button>
-      </div>
+        <div class="login-field">
+          <label for="loginUser">Username</label>
+          <span class="field-icon">👤</span>
+          <input type="text" id="loginUser" name="username"
+                 placeholder="Enter your username"
+                 autocomplete="username" required/>
+        </div>
 
-      <button class="login-btn" id="loginBtn" onclick="doLogin()">
-        <span id="loginBtnTxt">ACCESS DASHBOARD</span>
-        <div class="spinner" id="loginSpinner"></div>
-      </button>
+        <div class="login-field">
+          <label for="loginPass">Password</label>
+          <span class="field-icon">🔒</span>
+          <input type="password" id="loginPass" name="password"
+                 placeholder="Enter your password"
+                 autocomplete="current-password" required/>
+          <button type="button" class="pwd-toggle" id="pwdToggle" title="Show/hide password">👁</button>
+        </div>
+
+        <button type="submit" class="login-btn" id="loginBtn">
+          <span id="loginBtnTxt">ACCESS DASHBOARD</span>
+          <div class="spinner" id="loginSpinner"></div>
+        </button>
+
+      </form>
 
       <div class="login-footer">
         🔐 Secure access · Wolf FX V5 Pro<br>
@@ -1688,7 +1696,7 @@ canvas.echart{width:100%;height:110px;display:block;}
         <div class="pnl">
           <div class="ph"><span class="pht">📱 TELEGRAM SETUP</span></div>
           <div class="pb">
-            <div class="sr"><label>BOT TOKEN</label><input type="text" id="btok" value="8685317920:AAEuoRx0qM5xPDQFByWnnlAvWLwOkrhzt9o" placeholder="123456789:ABCdef..."/></div>
+            <div class="sr"><label>BOT TOKEN</label><input type="text" id="btok" value="YOUR_BOT_TOKEN_HERE" placeholder="123456789:ABCdef..."/></div>
             <div class="sr"><label>CHAT / CHANNEL ID</label><input type="text" id="bcid" value="-5134085233"/></div>
             <button class="dbbtn bb2" onclick="testTG()">▶ TEST CONNECTION</button>
             <div style="margin-top:12px;">
@@ -1809,12 +1817,7 @@ document.getElementById('pwdToggle').addEventListener('click',function(){
   this.textContent=show?'👁':'🙈';
 });
 
-// Enter key on either field triggers login
-['loginUser','loginPass'].forEach(id=>{
-  document.getElementById(id).addEventListener('keydown',e=>{
-    if(e.key==='Enter') doLogin();
-  });
-});
+// Form submit handles Enter key natively via onsubmit="doLogin();return false;"
 
 async function doLogin(){
   const btn=document.getElementById('loginBtn');
